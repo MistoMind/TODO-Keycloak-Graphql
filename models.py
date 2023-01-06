@@ -9,21 +9,21 @@ db_session = scoped_session(sessionmaker(autocommit=False,
                                          bind=engine))
 
 Base = declarative_base()
-# We will need this for querying
 Base.query = db_session.query_property()
 
 
 class User(Base):
     __tablename__ = 'user'
-    user_id = Column(Integer, primary_key=True)
-    name = Column(String)
-    password = Column(String)
-    email = Column(String, unique=True)
+    id = Column("user_id", Integer, primary_key=True)
+    name = Column("name", String)
+    password = Column("password", String)
+    email = Column("email", String, unique=True)
 
-class TODO(Base):
+
+class Todo(Base):
     __tablename__ = 'todo'
     todo_id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('User.user_id'))
+    user_id = Column(Integer, ForeignKey(User.id))
     title = Column(String)
     description = Column(String)
     date_time = Column(DateTime)
