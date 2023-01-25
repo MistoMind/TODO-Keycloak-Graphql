@@ -8,21 +8,24 @@ app = Flask(__name__)
 app.debug = True
 
 app.add_url_rule(
-    '/graphql',
+    '/api',
     view_func=GraphQLView.as_view(
         'graphql',
         schema=schema,
-        graphiql=True # for having the GraphiQL interface
+        graphiql=True
     )
 )
+
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
+
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     db_session.remove()
+
 
 if __name__ == '__main__':
     app.run()
