@@ -40,7 +40,7 @@
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle"
                     data-bs-toggle="dropdown" aria-expanded="false">
-                    <strong>Username</strong>
+                    <strong>{{user.name}}</strong>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
                     <li><a class="dropdown-item" href="#">Sign out</a></li>
@@ -55,36 +55,17 @@
             </div>
             <div class="card-body">
                 <ul class="list-group">
-                    <li class="list-group-item">
-                        <div class="input-group mb-3">
-                            <span class="input-group-text col-10">Title</span>
-                            <input type="datetime-local" class="form-control col-2" disabled>
-                        </div>
-                        <div class="mb-3">
-                            <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"
-                                placeholder="Description" disabled>This is a single line of text.</textarea>
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <div class="input-group mb-3">
-                            <span class="input-group-text col-10">Title</span>
-                            <input type="datetime-local" class="form-control col-2" disabled>
-                        </div>
-                        <div class="mb-3">
-                            <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"
-                                placeholder="Description" disabled>This is a single line of text.</textarea>
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <div class="input-group mb-3">
-                            <span class="input-group-text col-10">Title</span>
-                            <input type="datetime-local" class="form-control col-2" disabled>
-                        </div>
-                        <div class="mb-3">
-                            <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"
-                                placeholder="Description" disabled>This is a single line of text.</textarea>
-                        </div>
-                    </li>
+                    {% for note in user.notes %}
+                        <li class="list-group-item">
+                            <div class="input-group mb-3">
+                                <span class="input-group-text col-10">{{note.title}}</span>
+                                <input type="datetime-local" class="form-control col-2" disabled>
+                            </div>
+                            <div class="mb-3">
+                                <textarea class="form-control" id="{{note.id}}" rows="3" placeholder="Description" disabled>{{note.body}}</textarea>
+                            </div>
+                        </li>
+                    {% endfor %}
                 </ul>
             </div>
         </div>

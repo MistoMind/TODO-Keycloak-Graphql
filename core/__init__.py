@@ -16,16 +16,18 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('secret')
-app.config['JWT_SECRET_KEY'] = os.getenv('jwtsecret')
+# app.config['JWT_SECRET_KEY'] = os.getenv('jwtsecret')
 
 bcrypt.init_app(app)
 auth.init_app(app)
-jwt.init_app(app)
+# jwt.init_app(app)
 
 
 @app.route('/')
 def index():
-    return render_template("index.html")
+    curr_email = "khush@gmail.com"
+    user = session.query(User).filter_by(email=curr_email).first()
+    return render_template("index.html", user=user)
 
 
 @app.route('/login', methods=['POST'])
@@ -38,38 +40,48 @@ def login():
             "message": "User with email not found"
         }, 404
     if bcrypt.check_password_hash(user.password, data['password']):
-        token = create_access_token(identity=data['email'])
-        return jsonify(access_token=token)
+        # token = create_access_token(identity=data['email'])
+        token = data['email'] + "hello"
+        return jsonify(access_token=token), 200
     return {
         "ok": True,
         "message": "Incorrect password"
     }, 401
 
 
-def graphql():
-    view = GraphQLView.as_view(
-        'graphql',
-        schema=auth_required_schema,
-        graphiql=True,
-        get_context=lambda: {
-            'session': session,
-            'request': request,
-            'uid': get_jwt_identity()
-        }
-    )
-    return jwt_required(view)
+# def graphql():
+#     view = GraphQLView.as_view(
+#         'graphql',
+#         schema=auth_required_schema,
+#         graphiql=True,
+#         get_context=lambda: {
+#             'session': session,
+#             'request': request,
+#             'uid': get_jwt_identity()
+#         }
+#     )
+#     return jwt_required(view)
 
 
-app.add_url_rule(
-    '/api',
-    view_func=graphql()
-)
+# app.add_url_rule(
+#     '/api',
+#     view_func=graphql()
+# )
 
 app.add_url_rule(
     '/api',
     view_func=GraphQLView.as_view(
-        'graphq',
+        'api',
         schema=schema,
+        graphiql=True
+    )
+)
+
+app.add_url_rule(
+    '/apiAuth',
+    view_func=GraphQLView.as_view(
+        'apiAuth',
+        schema=auth_required_schema,
         graphiql=True
     )
 )

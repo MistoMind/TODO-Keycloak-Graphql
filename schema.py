@@ -4,6 +4,7 @@ from models import session, User as UserModel, Notes as NotesModel
 from extensions import bcrypt
 from typing import Optional
 
+
 class User(SQLAlchemyObjectType):
     class Meta:
         model = UserModel
@@ -14,7 +15,7 @@ class Notes(SQLAlchemyObjectType):
         model = NotesModel
 
 
-class createUser(graphene.Mutation):
+class CreateUser(graphene.Mutation):
     class Arguments:
         name = graphene.String()
         email = graphene.String()
@@ -23,7 +24,7 @@ class createUser(graphene.Mutation):
     ok = graphene.Boolean()
     user = graphene.Field(User)
 
-    def mutate(self, root, info, name, email, password):
+    def mutate(self, root, name, email, password):
         new_user = UserModel(
             name=name,
             email=email,
@@ -35,20 +36,32 @@ class createUser(graphene.Mutation):
         session.add(new_user)
         session.commit()
         ok = True
-        return createUser(ok=ok, user=new_user)
+        return CreateUser(ok=ok, user=new_user)
 
 
-class addNote(graphene.Mutation):
+class PreAuthMutation(graphene.ObjectType):
+    createUser = CreateUser.Field()
+
+
+class PreAuthQuery(graphene.ObjectType):
+    all_users = graphene.List(User)
+
+    def resolve_all_users(self, root):
+        return session.query(UserModel).all()
+
+
+class AddNote(graphene.Mutation):
     class Arguments:
+        email = graphene.String()
         title = graphene.String()
         body = graphene.String()
 
-    ok = graphene.Boolean
+    ok = graphene.Boolean()
     note = graphene.Field(Notes)
 
-    def mutate(self, root, info, title, body):
-        uid = info.context['uid']
-        user = session.query(UserModel).filter_by(email=uid).first()
+    def mutate(self, root, email, title, body):
+        # uid = info.context['uid']
+        user = session.query(UserModel).filter_by(email=email).first()
         new_note = NotesModel(
             title=title,
             body=body,
@@ -57,19 +70,19 @@ class addNote(graphene.Mutation):
         session.add(new_note)
         session.commit()
         ok = True
-        return addNote(ok=ok, note=new_note)
+        return AddNote(ok=ok, note=new_note)
 
 
-class updateNote(graphene.Mutation):
+class UpdateNote(graphene.Mutation):
     class Arguments:
         note_id = graphene.Int()
         title = graphene.String()
         body = graphene.String()
 
-    ok = graphene.Boolean
+    ok = graphene.Boolean()
     note = graphene.Field(Notes)
 
-    def mutate(self, root, info, note_id, title: Optional[str]=None, body: Optional[str]=None):
+    def mutate(self, root, note_id, title: Optional[str] = None, body: Optional[str] = None):
         note = session.query(NotesModel).filter_by(id=note_id).first()
         if not title:
             note.body = body
@@ -81,53 +94,37 @@ class updateNote(graphene.Mutation):
         session.commit()
         ok = True
         note = note
-        return updateNote(ok=ok, note=note)
+        return UpdateNote(ok=ok, note=note)
 
 
-class deleteNote(graphene.Mutation):
+class DeleteNote(graphene.Mutation):
     class Arguments:
-        id = graphene.Int()
+        note_id = graphene.Int()
 
-    ok = graphene.Boolean
+    ok = graphene.Boolean()
     note = graphene.Field(Notes)
 
-    def mutate(self, root, info, id):
-        note = session.query(NotesModel).filter_by(id=id).first()
+    def mutate(self, root, note_id):
+        note = session.query(NotesModel).filter_by(id=note_id).first()
         session.delete(note)
         session.commit()
         ok = True
         note = note
-        return deleteNote(ok=ok, note=note)
+        return DeleteNote(ok=ok, note=note)
 
 
 class PostAuthMutation(graphene.ObjectType):
-    addNote = addNote.Field()
-    updateNote = updateNote.Field()
-    deleteNote = deleteNote.Field()
-
-
-class PreAuthMutation(graphene.ObjectType):
-    createUser = createUser.Field()
+    addNote = AddNote.Field()
+    updateNote = UpdateNote.Field()
+    deleteNote = DeleteNote.Field()
 
 
 class Query(graphene.ObjectType):
-    findNote = graphene.Field(Notes, id=graphene.Int())
-    user_notes = graphene.List(Notes)
+    allNotes = graphene.List(Notes, email=graphene.String())
 
-    def resolve_user_notes(self, root, info):
-        uid = info.context['uid']
-        user = session.query(UserModel).filter_by(id=uid).first()
+    def resolve_allNotes(self, root, email):
+        user = session.query(UserModel).filter_by(email=email).first()
         return user.notes
-
-    def resolve_findNote(self, root, info, id):
-        return session.query(UserModel).filter_by(id=id).first()
-
-
-class PreAuthQuery(graphene.ObjectType):
-    all_users = graphene.List(User)
-
-    def resolve_all_users(self, root, info):
-        return session.query(UserModel).all()
 
 
 auth_required_schema = graphene.Schema(query=Query, mutation=PostAuthMutation)
