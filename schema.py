@@ -1,5 +1,5 @@
 import graphene
-from graphene_sqlalchemy import SQLAlchemyObjectType, SQLAlchemyConnectionField
+from graphene_sqlalchemy import SQLAlchemyObjectType
 from models import session, User as UserModel, Notes as NotesModel
 from extensions import bcrypt
 from typing import Optional
@@ -41,13 +41,6 @@ class CreateUser(graphene.Mutation):
 
 class PreAuthMutation(graphene.ObjectType):
     createUser = CreateUser.Field()
-
-
-class PreAuthQuery(graphene.ObjectType):
-    all_users = graphene.List(User)
-
-    def resolve_all_users(self, root):
-        return session.query(UserModel).all()
 
 
 class AddNote(graphene.Mutation):
@@ -99,14 +92,15 @@ class UpdateNote(graphene.Mutation):
 
 class DeleteNote(graphene.Mutation):
     class Arguments:
-        note_id = graphene.Int()
+        note_ids = graphene.List(graphene.Int)
 
     ok = graphene.Boolean()
     note = graphene.Field(Notes)
 
-    def mutate(self, root, note_id):
-        note = session.query(NotesModel).filter_by(id=note_id).first()
-        session.delete(note)
+    def mutate(self, root, note_ids):
+        for noteid in note_ids:
+            note = session.query(NotesModel).filter_by(id=noteid).first()
+            session.delete(note)
         session.commit()
         ok = True
         note = note
@@ -128,4 +122,4 @@ class Query(graphene.ObjectType):
 
 
 auth_required_schema = graphene.Schema(query=Query, mutation=PostAuthMutation)
-schema = graphene.Schema(query=PreAuthQuery, mutation=PreAuthMutation)
+schema = graphene.Schema(mutation=PreAuthMutation)
