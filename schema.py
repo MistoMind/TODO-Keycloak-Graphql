@@ -1,7 +1,7 @@
 import graphene
 from graphene_sqlalchemy import SQLAlchemyObjectType
 from models import session, User as UserModel, Notes as NotesModel
-from extensions import bcrypt
+from extensions import bcrypt, oidc
 from typing import Optional
 
 
@@ -13,6 +13,19 @@ class User(SQLAlchemyObjectType):
 class Notes(SQLAlchemyObjectType):
     class Meta:
         model = NotesModel
+
+
+class GetUser(graphene.Mutation):
+    class Arguments:
+        email = graphene.String()
+
+    ok = graphene.Boolean()
+    user = graphene.Field(User)
+
+    def mutate(self, root, email):
+        user = session.query(UserModel).filter_by(email=email).first()
+        ok = True
+        return GetUser(ok=ok, user=user)
 
 
 class CreateUser(graphene.Mutation):
@@ -52,6 +65,7 @@ class AddNote(graphene.Mutation):
     ok = graphene.Boolean()
     note = graphene.Field(Notes)
 
+    @oidc.accept_token(require_token=True)
     def mutate(self, root, email, title, body):
         # uid = info.context['uid']
         user = session.query(UserModel).filter_by(email=email).first()
@@ -75,6 +89,7 @@ class UpdateNote(graphene.Mutation):
     ok = graphene.Boolean()
     note = graphene.Field(Notes)
 
+    @oidc.accept_token(require_token=True)
     def mutate(self, root, note_id, title: Optional[str] = None, body: Optional[str] = None):
         note = session.query(NotesModel).filter_by(id=note_id).first()
         if not title:
@@ -97,6 +112,7 @@ class DeleteNote(graphene.Mutation):
     ok = graphene.Boolean()
     note = graphene.Field(Notes)
 
+    @oidc.accept_token(require_token=True)
     def mutate(self, root, note_ids):
         for noteid in note_ids:
             note = session.query(NotesModel).filter_by(id=noteid).first()
@@ -108,6 +124,7 @@ class DeleteNote(graphene.Mutation):
 
 
 class PostAuthMutation(graphene.ObjectType):
+    getUser = GetUser.Field()
     addNote = AddNote.Field()
     updateNote = UpdateNote.Field()
     deleteNote = DeleteNote.Field()
@@ -116,6 +133,7 @@ class PostAuthMutation(graphene.ObjectType):
 class Query(graphene.ObjectType):
     allNotes = graphene.List(Notes, email=graphene.String())
 
+    @oidc.accept_token(require_token=True)
     def resolve_allNotes(self, root, email):
         user = session.query(UserModel).filter_by(email=email).first()
         return user.notes

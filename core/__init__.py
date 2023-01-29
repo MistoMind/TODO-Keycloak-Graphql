@@ -1,58 +1,78 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for, session, g
 from flask_graphql import GraphQLView
-from extensions import bcrypt, auth, jwt
+from extensions import bcrypt, auth, oidc
+from models import session as dbsession
 from schema import auth_required_schema, schema
 from dotenv import load_dotenv
-from flask_jwt_extended import (
-    create_access_token,
-    create_refresh_token,
-    get_jwt_identity,
-    jwt_required
-)
 import os
-from models import User, session
+from keycloak import KeycloakOpenID
 
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('secret')
-app.config['JWT_SECRET_KEY'] = os.getenv('jwtsecret')
+app.config['SECRET_KEY'] = os.getenv('SECRET')
+app.config.update({
+    'SECRET_KEY': os.getenv('SECRET'),
+    'TESTING': True,
+    'DEBUG': True,
+    'OIDC_CLIENT_SECRETS': 'core/client_secrets.json',
+    'OIDC_ID_TOKEN_COOKIE_SECURE': False,
+    'OIDC_REQUIRE_VERIFIED_EMAIL': False,
+    'OIDC_USER_INFO_ENABLED': True,
+    'OIDC_OPENID_REALM': 'flask_api',
+    'OIDC_SCOPES': ['openid', 'email'],
+    'OIDC_TOKEN_TYPE_HINT': 'access_token',
+    'OIDC_INTROSPECTION_AUTH_METHOD': 'client_secret_post'
+})
 
 bcrypt.init_app(app)
 auth.init_app(app)
-jwt.init_app(app)
-curr_email = "khush@gmail.com"
+oidc.init_app(app)
 
-
-def currUser():
-    return session.query(User).filter_by(email=curr_email).first()
+keycloak_openid = KeycloakOpenID(server_url="http://localhost:8080/",
+                                 client_id="flask_api",
+                                 realm_name="todo",
+                                 client_secret_key="LttRP7cGMeCb3juwpoIqqqPiruPv0aEJ",
+                                 verify=True)
 
 
 @app.route('/')
+@oidc.require_login
 def index():
-    return render_template("index.html", user=currUser())
+    query = """
+        mutation GetUser($email: String!) {
+            getUser(email: $email) {
+                user {
+                    name
+                    notes {
+                        id
+                        title
+                        body
+                    }
+                }
+            }
+        }
+        """
+    variables = {
+        "email": oidc.user_getinfo(['email']).get('email')
+    }
+    result = auth_required_schema.execute(query, variables=variables)
+    return render_template("index.html", user=result.data['getUser']['user'])
 
 
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.get_json(force=True)
-    user = session.query(User).filter_by(email=data['email']).first()
-    if not user:
-        return {
-            "ok": True,
-            "message": "User with email not found"
-        }, 404
-    if bcrypt.check_password_hash(user.password, data['password']):
-        token = create_access_token(identity=data['email'])
-        return jsonify(access_token=token), 200
-    return {
-        "ok": True,
-        "message": "Incorrect password"
-    }, 401
+@app.route('/logout')
+def logout():
+    refresh_token = oidc.get_refresh_token()
+    oidc.logout()
+    if refresh_token is not None:
+        keycloak_openid.logout(refresh_token)
+    oidc.logout()
+    g.oidc_id_token = None
+    return redirect(url_for('index'))
 
 
+@oidc.accept_token(require_token=True)
 @app.route('/add', methods=['POST'])
-@jwt_required()
 def addNote():
     query = """
         mutation AddNote($email: String!, $body: String!, $title: String!){
@@ -64,7 +84,7 @@ def addNote():
         }
     """
     variables = {
-        "email": curr_email,
+        "email": oidc.user_getinfo(['email']).get('email'),
         "title": request.form.get("title"),
         "body": request.form.get("body")
     }
@@ -72,8 +92,8 @@ def addNote():
     return redirect(url_for('index'))
 
 
+@oidc.accept_token(require_token=True)
 @app.route('/delete', methods=['POST'])
-@jwt_required()
 def deleteNote():
     query = """
         mutation DeleteNote($noteIds: [Int]!) {
@@ -89,8 +109,8 @@ def deleteNote():
     return redirect(url_for('index'))
 
 
+@oidc.accept_token(require_token=True)
 @app.route('/update', methods=['POST'])
-@jwt_required()
 def updateNote():
     query = """
         mutation UpdateNote($noteId: Int!, $title: String, $body: String) {
@@ -110,23 +130,18 @@ def updateNote():
     return redirect(url_for('index'))
 
 
-def graphql():
-    view = GraphQLView.as_view(
-        'graphql',
+app.add_url_rule(
+    '/apiAuth',
+    view_func=GraphQLView.as_view(
+        'apiAuth',
         schema=auth_required_schema,
         graphiql=True,
         get_context=lambda: {
             'session': session,
             'request': request,
-            'uid': get_jwt_identity()
+            'uid': oidc.user_getinfo(['email']).get('email')
         }
     )
-    return jwt_required(view)
-
-
-app.add_url_rule(
-    '/api',
-    view_func=graphql()
 )
 
 app.add_url_rule(
@@ -137,3 +152,8 @@ app.add_url_rule(
         graphiql=True
     )
 )
+
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    dbsession.remove()
