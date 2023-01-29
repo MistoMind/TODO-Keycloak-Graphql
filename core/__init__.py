@@ -27,10 +27,10 @@ bcrypt.init_app(app)
 auth.init_app(app)
 oidc.init_app(app)
 
-keycloak_openid = KeycloakOpenID(server_url=os.getenv("SERVER_URL"),
-                                 client_id=os.getenv("CLIENT_ID"),
-                                 realm_name=os.getenv("REALM_NAME"),
-                                 client_secret_key=os.getenv("CLIENT_SECRET"),
+keycloak_openid = KeycloakOpenID(server_url=f"{os.getenv('SERVER_URL')}",
+                                 client_id=f"{os.getenv('CLIENT_ID')}",
+                                 realm_name=f"{os.getenv('REALM_NAME')}",
+                                 client_secret_key=f"{os.getenv('CLIENT_SECRET')}",
                                  verify=True)
 
 
@@ -88,7 +88,6 @@ def addNote():
         "body": request.form.get("body"),
         "time": request.form.get("time")
     }
-    print(variables)
     auth_required_schema.execute(query, variables=variables)
     return redirect(url_for('index'))
 
