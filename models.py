@@ -2,6 +2,7 @@ from sqlalchemy import *
 from sqlalchemy.orm import (scoped_session, sessionmaker, relationship)
 from sqlalchemy.ext.declarative import declarative_base
 import os
+import datetime
 
 BASE_DIR = os.getcwd()
 engine = create_engine(f'sqlite:///{BASE_DIR}/todoDB.db')
@@ -15,6 +16,7 @@ class Notes(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String(100))
     body = Column(Text)
+    time = Column(Time, default=None)
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship('User', back_populates="notes")
 

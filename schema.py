@@ -61,16 +61,17 @@ class AddNote(graphene.Mutation):
         email = graphene.String()
         title = graphene.String()
         body = graphene.String()
+        time = graphene.Time()
 
     ok = graphene.Boolean()
     note = graphene.Field(Notes)
 
-    def mutate(self, root, email, title, body):
-        # uid = info.context['uid']
+    def mutate(self, root, email, title, body, time):
         user = session.query(UserModel).filter_by(email=email).first()
         new_note = NotesModel(
             title=title,
             body=body,
+            time=time,
             user=user
         )
         session.add(new_note)
@@ -84,11 +85,12 @@ class UpdateNote(graphene.Mutation):
         note_id = graphene.Int()
         title = graphene.String()
         body = graphene.String()
+        time = graphene.DateTime()
 
     ok = graphene.Boolean()
     note = graphene.Field(Notes)
 
-    def mutate(self, root, note_id, title: Optional[str] = None, body: Optional[str] = None):
+    def mutate(self, root, note_id, title: Optional[str] = None, body: Optional[str] = None, time: Optional[str] = None):
         note = session.query(NotesModel).filter_by(id=note_id).first()
         if not title:
             note.body = body
@@ -97,6 +99,7 @@ class UpdateNote(graphene.Mutation):
         else:
             note.title = title
             note.body = body
+            note.time = time
         session.commit()
         ok = True
         note = note
@@ -110,7 +113,6 @@ class DeleteNote(graphene.Mutation):
     ok = graphene.Boolean()
     note = graphene.Field(Notes)
 
-    # @oidc.accept_token(require_token=True)
     def mutate(self, root, note_ids):
         print(note_ids)
         for noteid in note_ids:

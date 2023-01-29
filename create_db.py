@@ -1,3 +1,3 @@
-from models import Base, session
+from models import Base
 
 Base.metadata.create_all()

@@ -9,7 +9,6 @@ from keycloak import KeycloakOpenID
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET')
 app.config.update({
     'SECRET_KEY': os.getenv('SECRET'),
     'TESTING': True,
@@ -28,10 +27,10 @@ bcrypt.init_app(app)
 auth.init_app(app)
 oidc.init_app(app)
 
-keycloak_openid = KeycloakOpenID(server_url="http://localhost:8080/",
-                                 client_id="flask_api",
-                                 realm_name="todo",
-                                 client_secret_key="LttRP7cGMeCb3juwpoIqqqPiruPv0aEJ",
+keycloak_openid = KeycloakOpenID(server_url=os.getenv("SERVER_URL"),
+                                 client_id=os.getenv("CLIENT_ID"),
+                                 realm_name=os.getenv("REALM_NAME"),
+                                 client_secret_key=os.getenv("CLIENT_SECRET"),
                                  verify=True)
 
 
@@ -47,6 +46,7 @@ def index():
                         id
                         title
                         body
+                        time
                     }
                 }
             }
@@ -74,8 +74,8 @@ def logout():
 @app.route('/add', methods=['POST'])
 def addNote():
     query = """
-        mutation AddNote($email: String!, $body: String!, $title: String!){
-            addNote(email: $email, body: $body, title: $title){
+        mutation AddNote($email: String!, $title: String!, $body: String, $time: Time){
+            addNote(email: $email, title: $title, body: $body, time: $time){
                 note{
                     title
                 }
@@ -85,8 +85,10 @@ def addNote():
     variables = {
         "email": oidc.user_getinfo(['email']).get('email'),
         "title": request.form.get("title"),
-        "body": request.form.get("body")
+        "body": request.form.get("body"),
+        "time": request.form.get("time")
     }
+    print(variables)
     auth_required_schema.execute(query, variables=variables)
     return redirect(url_for('index'))
 
@@ -98,7 +100,7 @@ def deleteNote():
         mutation DeleteNote($noteIds: [Int]!) {
             deleteNote(noteIds: $noteIds) {
                 note {
-                    body
+                    title
                 }
             }
         }
@@ -112,11 +114,12 @@ def deleteNote():
 @app.route('/update', methods=['POST'])
 def updateNote():
     query = """
-        mutation UpdateNote($noteId: Int!, $title: String, $body: String) {
-            updateNote(noteId: $noteId, title: $title, body: $body) {
+        mutation UpdateNote($noteId: Int!, $title: String, $body: String, $time: Time) {
+            updateNote(noteId: $noteId, title: $title, body: $body, time: $time) {
                 note {
                     title
                     body
+                    time
                 }
             }
         }

@@ -59,7 +59,7 @@
                         <li class="list-group-item">
                             <div class="input-group mb-3">
                                 <span class="input-group-text col-10">{{note.title}}</span>
-                                <input type="datetime-local" class="form-control col-2" disabled>
+                                <input type="time" class="form-control col-2" value="{{note.time}}" disabled>
                             </div>
                             <div class="mb-3">
                                 <textarea class="form-control" id="{{note.id}}" rows="3" placeholder="Description" disabled>{{note.body}}</textarea>
@@ -90,8 +90,8 @@
                             placeholder="Description"></textarea>
                         </div>
                         <div class="input-group mb-3">
-                            <span class="input-group-text">Date & Time</span>
-                            <input type="datetime-local" class="form-control">
+                            <span class="input-group-text">Time</span>
+                            <input type="time" class="form-control" id="time" name="time">
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -153,8 +153,8 @@
                                     <textarea class="form-control" rows="3" placeholder="Description">{{note.body}}</textarea>
                                 </div>
                                 <div class="input-group mb-3">
-                                    <span class="input-group-text">Date & Time</span>
-                                    <input type="datetime-local" class="form-control">
+                                    <span class="input-group-text">Time</span>
+                                    <input type="time" class="form-control" value="{{note.time}}">
                                 </div>
                             </li>
                             {% endfor %}
