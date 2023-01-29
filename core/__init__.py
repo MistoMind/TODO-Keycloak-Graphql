@@ -1,5 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for, session, g
-from flask_graphql import GraphQLView
+from flask import Flask, request, render_template, redirect, url_for, g
 from extensions import bcrypt, auth, oidc
 from models import session as dbsession
 from schema import auth_required_schema, schema
@@ -63,11 +62,11 @@ def index():
 @app.route('/logout')
 def logout():
     refresh_token = oidc.get_refresh_token()
+    g.oidc_id_token = None
     oidc.logout()
+    redirect(url_for('logout'))
     if refresh_token is not None:
         keycloak_openid.logout(refresh_token)
-    oidc.logout()
-    g.oidc_id_token = None
     return redirect(url_for('index'))
 
 
@@ -128,30 +127,6 @@ def updateNote():
     }
     auth_required_schema.execute(query, variables=variables)
     return redirect(url_for('index'))
-
-
-app.add_url_rule(
-    '/apiAuth',
-    view_func=GraphQLView.as_view(
-        'apiAuth',
-        schema=auth_required_schema,
-        graphiql=True,
-        get_context=lambda: {
-            'session': session,
-            'request': request,
-            'uid': oidc.user_getinfo(['email']).get('email')
-        }
-    )
-)
-
-app.add_url_rule(
-    '/api',
-    view_func=GraphQLView.as_view(
-        'api',
-        schema=schema,
-        graphiql=True
-    )
-)
 
 
 @app.teardown_appcontext
