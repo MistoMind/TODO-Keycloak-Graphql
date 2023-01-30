@@ -5,6 +5,7 @@ from schema import auth_required_schema, schema
 from dotenv import load_dotenv
 import os
 from keycloak import KeycloakOpenID
+import stripe
 
 load_dotenv()
 
@@ -20,7 +21,9 @@ app.config.update({
     'OIDC_OPENID_REALM': 'flask_api',
     'OIDC_SCOPES': ['openid', 'email'],
     'OIDC_TOKEN_TYPE_HINT': 'access_token',
-    'OIDC_INTROSPECTION_AUTH_METHOD': 'client_secret_post'
+    'OIDC_INTROSPECTION_AUTH_METHOD': 'client_secret_post',
+    'STRIPE_PUBLIC_KEY': os.getenv('STRIPE_PUBLIC_KEY'),
+    'STRIPE_SECRET_KEY': os.getenv('STRIPE_SECRET_KEY')
 })
 
 bcrypt.init_app(app)
@@ -32,6 +35,7 @@ keycloak_openid = KeycloakOpenID(server_url=f"{os.getenv('SERVER_URL')}",
                                  realm_name=f"{os.getenv('REALM_NAME')}",
                                  client_secret_key=f"{os.getenv('CLIENT_SECRET')}",
                                  verify=True)
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 
 @app.route('/')
@@ -68,6 +72,28 @@ def logout():
     if refresh_token is not None:
         keycloak_openid.logout(refresh_token)
     return redirect(url_for('index'))
+
+
+@oidc.accept_token(require_token=True)
+@app.route('/create-checkout-session', methods=['POST'])
+def create_checkout_session():
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            line_items=[
+                {
+                    # Provide the exact Price ID (for example, pr_1234) of the product you want to sell
+                    'price': 'price_1MVyz4SAuzkFWObo0IbKqCN3',
+                    'quantity': 1,
+                },
+            ],
+            mode='payment',
+            success_url="http://localhost:5000" + '/success.html',
+            cancel_url="http://localhost:5000" + '/cancel.html',
+        )
+    except Exception as e:
+        return str(e)
+
+    return redirect(checkout_session.url, code=303)
 
 
 @oidc.accept_token(require_token=True)

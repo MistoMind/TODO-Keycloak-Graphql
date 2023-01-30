@@ -35,6 +35,9 @@
                 <li class="nav-item">
                     <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editTODO">Edit TODO</button>
                 </li>
+                <li class="nav-item">
+                    <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#buyPremium">Buy Premium</button>
+                </li>
             </ul>
             <hr class="sidepane-hr">
             <div class="dropdown">
@@ -164,6 +167,33 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
                         <button type="submit" class="btn btn-warning">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buy Premium MODAL -->
+    <div class="modal" tabindex="-1" id="buyPremium">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Buy Premium</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{url_for('create_checkout_session')}}" method="POST">
+                    <div class="modal-body">
+                       <div class="product">
+        <img src="https://i.imgur.com/EHyR2nP.png" alt="The cover of Stubborn Attachments" />
+        <div class="description">
+          <h3>Stubborn Attachments</h3>
+          <h5>$20.00</h5>
+        </div>
+      </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-warning">Proceed</button>
                     </div>
                 </form>
             </div>
