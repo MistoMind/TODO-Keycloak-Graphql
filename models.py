@@ -27,4 +27,5 @@ class User(Base):
     name = Column(String(100), nullable=False)
     email = Column(String(100), unique=True, nullable=False)
     password = Column(String(200), nullable=False)
+    premium = Column(Boolean, nullable=False, default=False)
     notes = relationship('Notes', back_populates="user")

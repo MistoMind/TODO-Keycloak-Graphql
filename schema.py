@@ -123,11 +123,28 @@ class DeleteNote(graphene.Mutation):
         return DeleteNote(ok=ok, note=note)
 
 
+class MakePremium(graphene.Mutation):
+    class Arguments:
+        email = graphene.String()
+
+    ok = graphene.Boolean()
+    user = graphene.Field(Notes)
+
+    def mutate(self, root, email):
+        user = session.query(UserModel).filter_by(email=email).first()
+        user.premium = True
+        session.commit()
+        ok = True
+        note = note
+        return DeleteNote(ok=ok, note=note)
+
+
 class AuthMutation(graphene.ObjectType):
     getUser = GetUser.Field()
     addNote = AddNote.Field()
     updateNote = UpdateNote.Field()
     deleteNote = DeleteNote.Field()
+    makePremium = MakePremium.Field()
 
 
 class Query(graphene.ObjectType):

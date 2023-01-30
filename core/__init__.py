@@ -81,19 +81,37 @@ def create_checkout_session():
         checkout_session = stripe.checkout.Session.create(
             line_items=[
                 {
-                    # Provide the exact Price ID (for example, pr_1234) of the product you want to sell
                     'price': 'price_1MVyz4SAuzkFWObo0IbKqCN3',
                     'quantity': 1,
                 },
             ],
             mode='payment',
-            success_url="http://localhost:5000" + '/success.html',
-            cancel_url="http://localhost:5000" + '/cancel.html',
+            success_url=url_for('success', _external=True),
+            cancel_url=url_for('index', _external=True),
         )
     except Exception as e:
         return str(e)
 
     return redirect(checkout_session.url, code=303)
+
+
+@oidc.accept_token(require_token=True)
+@app.route('/success')
+def success():
+    query = """
+        mutation MakePremium {
+            makePremium(email: $email) {
+                user {
+                    name
+                }
+            }
+        }
+    """
+    variables = {
+        "email": oidc.user_getinfo(['email']).get('email'),
+    }
+    auth_required_schema.execute(query, variables=variables)
+    return redirect(url_for('index'))
 
 
 @oidc.accept_token(require_token=True)
