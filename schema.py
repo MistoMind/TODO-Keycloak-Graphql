@@ -135,8 +135,8 @@ class MakePremium(graphene.Mutation):
         user.premium = True
         session.commit()
         ok = True
-        note = note
-        return DeleteNote(ok=ok, note=note)
+        user = user
+        return DeleteNote(ok=ok, user=user)
 
 
 class AuthMutation(graphene.ObjectType):
