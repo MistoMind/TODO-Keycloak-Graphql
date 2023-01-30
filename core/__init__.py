@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template, redirect, url_for, g
-from extensions import bcrypt, auth, oidc
+from extensions import bcrypt, oidc
 from models import session as dbsession
 from schema import auth_required_schema, schema
 from dotenv import load_dotenv
@@ -27,7 +27,6 @@ app.config.update({
 })
 
 bcrypt.init_app(app)
-auth.init_app(app)
 oidc.init_app(app)
 
 keycloak_openid = KeycloakOpenID(server_url=f"{os.getenv('SERVER_URL')}",

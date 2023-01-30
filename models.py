@@ -2,12 +2,11 @@ from sqlalchemy import *
 from sqlalchemy.orm import (scoped_session, sessionmaker, relationship)
 from sqlalchemy.ext.declarative import declarative_base
 import os
-import datetime
 
 BASE_DIR = os.getcwd()
 engine = create_engine(f'sqlite:///{BASE_DIR}/todoDB.db')
 session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
-Base = declarative_base(bind=engine)
+Base = declarative_base()
 Base.query = session.query_property()
 
 

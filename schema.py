@@ -2,7 +2,6 @@ import graphene
 from graphene_sqlalchemy import SQLAlchemyObjectType
 from models import session, User as UserModel, Notes as NotesModel
 from extensions import bcrypt
-from typing import Optional
 
 
 class User(SQLAlchemyObjectType):
