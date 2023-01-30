@@ -82,24 +82,23 @@ class AddNote(graphene.Mutation):
 
 class UpdateNote(graphene.Mutation):
     class Arguments:
-        note_id = graphene.Int()
-        title = graphene.String()
-        body = graphene.String()
-        time = graphene.DateTime()
+        note_ids = graphene.List(graphene.Int)
+        titles = graphene.List(graphene.String)
+        bodys = graphene.List(graphene.String)
+        times = graphene.List(graphene.Time)
 
     ok = graphene.Boolean()
     note = graphene.Field(Notes)
 
-    def mutate(self, root, note_id, title: Optional[str] = None, body: Optional[str] = None, time: Optional[str] = None):
-        note = session.query(NotesModel).filter_by(id=note_id).first()
-        if not title:
-            note.body = body
-        elif not body:
-            note.title = title
-        else:
-            note.title = title
-            note.body = body
-            note.time = time
+    def mutate(self, root, note_ids, titles, bodys, times):
+        for i in range(0, len(note_ids)):
+            note = session.query(NotesModel).filter_by(id=note_ids[i]).first()
+            print(note.title)
+            print(note.body)
+            print(note.time)
+            note.title = titles[i]
+            note.body = bodys[i]
+            note.time = times[i]
         session.commit()
         ok = True
         note = note

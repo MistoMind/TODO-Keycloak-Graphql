@@ -147,14 +147,15 @@
                             <li class="list-group-item">
                                 <div class="input-group mb-3">
                                     <span class="input-group-text">Title</span>
-                                    <input type="text" class="form-control" placeholder="Title" value="{{note.title}}">
+                                    <input type="hidden" value="{{note.id}}" name="noteid">
+                                    <input type="text" class="form-control" placeholder="Title" name="title" value="{{note.title}}">
                                 </div>
                                 <div class="mb-3">
-                                    <textarea class="form-control" rows="3" placeholder="Description">{{note.body}}</textarea>
+                                    <textarea class="form-control" rows="3" placeholder="Description" name="body">{{note.body}}</textarea>
                                 </div>
                                 <div class="input-group mb-3">
                                     <span class="input-group-text">Time</span>
-                                    <input type="time" class="form-control" value="{{note.time}}">
+                                    <input type="time" class="form-control" name="time" value="{{note.time}}">
                                 </div>
                             </li>
                             {% endfor %}
@@ -162,7 +163,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-warning">Save Changes</button>
+                        <button type="submit" class="btn btn-warning">Save Changes</button>
                     </div>
                 </form>
             </div>

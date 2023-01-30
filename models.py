@@ -16,7 +16,7 @@ class Notes(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String(100))
     body = Column(Text)
-    time = Column(Time, default=None)
+    time = Column(Time)
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship('User', back_populates="notes")
 
@@ -24,7 +24,7 @@ class Notes(Base):
 class User(Base):
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
-    name = Column(String(100))
-    email = Column(String(100))
-    password = Column(String(200))
+    name = Column(String(100), nullable=False)
+    email = Column(String(100), unique=True, nullable=False)
+    password = Column(String(200), nullable=False)
     notes = relationship('Notes', back_populates="user")

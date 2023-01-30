@@ -113,8 +113,8 @@ def deleteNote():
 @app.route('/update', methods=['POST'])
 def updateNote():
     query = """
-        mutation UpdateNote($noteId: Int!, $title: String, $body: String, $time: Time) {
-            updateNote(noteId: $noteId, title: $title, body: $body, time: $time) {
+        mutation UpdateNote($noteIds: [Int]!, $titles: [String], $bodys: [String], $times: [Time]) {
+            updateNote(noteIds: $noteIds, titles: $titles, bodys: $bodys, times: $times) {
                 note {
                     title
                     body
@@ -124,8 +124,10 @@ def updateNote():
         }
     """
     variables = {
-        "noteId": request.form.get("noteid"),
-        "body": request.form.get("body")
+        "noteIds": request.form.getlist("noteid"),
+        "titles": request.form.getlist("title"),
+        "bodys": request.form.getlist("body"),
+        "times": request.form.getlist("time")
     }
     auth_required_schema.execute(query, variables=variables)
     return redirect(url_for('index'))
